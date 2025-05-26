@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pizza Romana Donatella Rechner</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 2rem auto; padding: 1rem; }
+    h1 { text-align: center; }
+    label { display: block; margin: 0.5rem 0 0.2rem; }
+    input, select { width: 100%; padding: 0.5rem; margin-bottom: 1rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; }
+    th { background-color: #f9f9f9; }
+  </style>
+</head>
+<body>
+  <h1>Pizza Romana Donatella Rechner</h1>
+  <label for="personsInput">Anzahl Personen (Pizzen):</label>
+  <input type="number" id="personsInput" min="1" value="2">
+
+  <label for="styleSelect">Pizzastil:</label>
+  <select id="styleSelect">
+    <option value="Fluffig">Fluffig</option>
+    <option value="Flach">Flach</option>
+  </select>
+
+  <table id="result">
+    <thead>
+      <tr><th>Zutat</th><th>Menge</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Mehl Gesamt</td><td id="mehlGesamt"></td></tr>
+      <tr><td>Mehl 00</td><td id="mehl00"></td></tr>
+      <tr><td>Mehl 1</td><td id="mehl1"></td></tr>
+      <tr><td>Wasser</td><td id="wasser"></td></tr>
+      <tr><td>Hefe</td><td id="hefe"></td></tr>
+      <tr><td>Salz</td><td id="salz"></td></tr>
+    </tbody>
+  </table>
+
+  <script>
+    const mehlPerPizza = { "Fluffig": 217.5, "Flach": 200 };
+    const factors = {
+      mehl00: 0.7,
+      mehl1: 0.3,
+      wasser: 0.685057,
+      hefe: { "Fluffig": 0.001839, "Flach": 0.001 },
+      salz: 0.029885
+    };
+
+    function calculate() {
+      const persons = Number(document.getElementById('personsInput').value);
+      const style = document.getElementById('styleSelect').value;
+      if (!persons || persons < 1) return;
+
+      const totalFlour = mehlPerPizza[style] * persons;
+      const mehl00 = totalFlour * factors.mehl00;
+      const mehl1 = totalFlour * factors.mehl1;
+      const wasser = totalFlour * factors.wasser;
+      const hefe = totalFlour * factors.hefe[style];
+      const salz = totalFlour * factors.salz;
+
+      document.getElementById('mehlGesamt').textContent = totalFlour.toFixed(1) + ' g';
+      document.getElementById('mehl00').textContent = mehl00.toFixed(1) + ' g';
+      document.getElementById('mehl1').textContent = mehl1.toFixed(1) + ' g';
+      document.getElementById('wasser').textContent = wasser.toFixed(0) + ' ml';
+      document.getElementById('hefe').textContent = hefe.toFixed(2) + ' g';
+      document.getElementById('salz').textContent = salz.toFixed(0) + ' g';
+    }
+
+    document.getElementById('personsInput').addEventListener('input', calculate);
+    document.getElementById('styleSelect').addEventListener('change', calculate);
+    window.addEventListener('DOMContentLoaded', calculate);
+  </script>
+</body>
+</html>
