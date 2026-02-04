@@ -124,8 +124,8 @@
     <div class="field">
       <label>Pizzastil</label>
       <div class="segment-control" id="styleSegment">
-        <button data-style="Fluffig" class="active">Fluffig</button>
-        <button data-style="Flach">Flach</button>
+        <button data-style="Fluffig">Fluffig</button>
+        <button data-style="Flach" class="active">Flach</button>
       </div>
     </div>
     <table class="table" id="resultTable">
@@ -167,7 +167,7 @@
       hefe: { "Fluffig": 0.001839, "Flach": 0.0008108108108108108 }, salz: 0.026315
     };
 
-    let selectedStyle = 'Fluffig';
+    let selectedStyle = 'Flach';
     const styleButtons = document.querySelectorAll('#styleSegment button');
     styleButtons.forEach(btn => {
       btn.addEventListener('click', () => {
