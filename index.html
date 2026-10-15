@@ -13,11 +13,35 @@
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <!-- System font stack for native iOS look -->
   <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #FFFFFF;
+      --header-bg: #F8F8F8;
+      --border: #C7C7CC;
+      --text: #000000;
+      --text-secondary: #6D6D72;
+      --text-steps: #1C1C1E;
+      --input-bg: #F2F2F7;
+      --accent: #007AFF;
+      --on-accent: #FFFFFF;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #000000;
+        --header-bg: #1C1C1E;
+        --border: #38383A;
+        --text: #FFFFFF;
+        --text-secondary: #8E8E93;
+        --text-steps: #E5E5EA;
+        --input-bg: #1C1C1E;
+        --accent: #0A84FF;
+      }
+    }
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
-      background-color: #FFFFFF;
-      color: #000000;
+      background-color: var(--bg);
+      color: var(--text);
       padding-top: env(safe-area-inset-top);
     }
     .header {
@@ -25,8 +49,8 @@
       align-items: center;
       justify-content: center;
       height: 56px;
-      background: #F8F8F8;
-      border-bottom: 1px solid #C7C7CC;
+      background: var(--header-bg);
+      border-bottom: 1px solid var(--border);
       position: sticky;
       top: 0;
       z-index: 10;
@@ -41,22 +65,22 @@
     }
     .segment-control {
       display: inline-flex;
-      border: 1px solid #007AFF;
+      border: 1px solid var(--accent);
       border-radius: 8px;
       overflow: hidden;
-      background: #F8F8F8;
+      background: var(--header-bg);
     }
     .segment-control button {
       padding: 8px 16px;
       border: none;
       background: none;
       font-size: 15px;
-      color: #007AFF;
+      color: var(--accent);
       flex: 1;
     }
     .segment-control button.active {
-      background: #007AFF;
-      color: #FFFFFF;
+      background: var(--accent);
+      color: var(--on-accent);
     }
     .field {
       margin-bottom: 16px;
@@ -65,16 +89,28 @@
       display: block;
       margin-bottom: 4px;
       font-size: 13px;
-      color: #6D6D72;
+      color: var(--text-secondary);
     }
     .field input {
       width: 100%;
       padding: 10px;
       font-size: 17px;
-      border: 1px solid #C7C7CC;
+      border: 1px solid var(--border);
       border-radius: 8px;
-      background: #F2F2F7;
+      background: var(--input-bg);
+      color: var(--text);
       box-sizing: border-box;
+    }
+    .field input[type="range"] {
+      padding: 0;
+      border: none;
+      background: none;
+      accent-color: var(--accent);
+    }
+    .field label .range-value {
+      float: right;
+      color: var(--text);
+      font-weight: 600;
     }
     .table {
       width: 100%;
@@ -85,15 +121,21 @@
       text-align: left;
       padding: 12px;
       font-size: 17px;
-      border-bottom: 1px solid #C7C7CC;
+      border-bottom: 1px solid var(--border);
     }
     .table th {
-      color: #6D6D72;
+      color: var(--text-secondary);
       font-weight: 600;
     }
     .table td.value {
       text-align: right;
-      color: #000000;
+      color: var(--text);
+    }
+    .table tr.total td {
+      font-weight: 600;
+    }
+    .table tr.total-first td {
+      border-top: 2px solid var(--border);
     }
 	.section-title {
 	  margin-top: 32px;
@@ -108,7 +150,7 @@
 	  margin-bottom: 10px;
 	  font-size: 16px;
 	  line-height: 1.4;
-	  color: #1C1C1E;
+	  color: var(--text-steps);
 	}
   </style>
 </head>
@@ -128,6 +170,10 @@
         <button data-style="Flach" class="active">Flach</button>
       </div>
     </div>
+    <div class="field">
+      <label for="hydrationInput">Hydratation <span class="range-value" id="hydrationValue"></span></label>
+      <input type="range" id="hydrationInput" min="60" max="75" step="0.5" value="70">
+    </div>
     <table class="table" id="resultTable">
       <thead>
         <tr><th>Zutat</th><th>Menge</th></tr>
@@ -139,6 +185,8 @@
         <tr><td>Wasser</td><td class="value" id="wasser"></td></tr>
         <tr><td>Frische Hefe</td><td class="value" id="hefe"></td></tr>
         <tr><td>Salz</td><td class="value" id="salz"></td></tr>
+        <tr class="total total-first"><td>Teigballen</td><td class="value" id="teigballen"></td></tr>
+        <tr class="total"><td>Teig gesamt</td><td class="value" id="teigGesamt"></td></tr>
       </tbody>
     </table>
     <h2 class="section-title">Zubereitung</h2>
@@ -161,11 +209,15 @@
   </div>
 
   <script>
+    // Mehl pro Pizza bei 70 % Hydratation; daraus ergibt sich das feste Ballengewicht je Stil
     const mehlPerPizza = { "Fluffig": 173.5956402033615, "Flach": 146.01244587989498 };
+    const referenceHydration = 0.70;
     const factors = {
-      mehl00: 0.7, mehl1: 0.3, wasser: 0.70,
+      mehl00: 0.7, mehl1: 0.3,
       hefe: { "Fluffig": 0.001839, "Flach": 0.0008108108108108108 }, salz: 0.026315
     };
+    const doughFactor = (style, hydration) => 1 + hydration + factors.hefe[style] + factors.salz;
+    const ballWeight = style => mehlPerPizza[style] * doughFactor(style, referenceHydration);
 
     let selectedStyle = 'Flach';
     const styleButtons = document.querySelectorAll('#styleSegment button');
@@ -182,10 +234,12 @@
       const persons = Number(document.getElementById('personsInput').value);
       if (!persons || persons < 1) return;
       const style = selectedStyle;
-      const totalFlour = mehlPerPizza[style] * persons;
+      const hydration = Number(document.getElementById('hydrationInput').value) / 100;
+      const flourPerBall = ballWeight(style) / doughFactor(style, hydration);
+      const totalFlour = flourPerBall * persons;
       const mehl00 = totalFlour * factors.mehl00;
       const mehl1 = totalFlour * factors.mehl1;
-      const wasser = totalFlour * factors.wasser;
+      const wasser = totalFlour * hydration;
       const hefe = totalFlour * factors.hefe[style];
       const salz = totalFlour * factors.salz;
 
@@ -195,9 +249,13 @@
       document.getElementById('wasser').textContent = wasser.toFixed(0) + ' ml';
       document.getElementById('hefe').textContent = hefe.toFixed(2) + ' g';
       document.getElementById('salz').textContent = salz.toFixed(0) + ' g';
+      document.getElementById('hydrationValue').textContent = (hydration * 100).toLocaleString('de-DE') + ' %';
+      document.getElementById('teigballen').textContent = ballWeight(style).toFixed(0) + ' g';
+      document.getElementById('teigGesamt').textContent = (ballWeight(style) * persons).toFixed(0) + ' g';
     }
 
     document.getElementById('personsInput').addEventListener('input', calculate);
+    document.getElementById('hydrationInput').addEventListener('input', calculate);
     window.addEventListener('DOMContentLoaded', calculate);
   </script>
 </body>
