@@ -214,7 +214,7 @@
     const referenceHydration = 0.70;
     const factors = {
       mehl00: 0.7, mehl1: 0.3,
-      hefe: { "Fluffig": 0.001839, "Flach": 0.0008108108108108108 }, salz: 0.026315
+      hefe: { "Fluffig": 0.0015, "Flach": 0.0008108108108108108 }, salz: 0.026315
     };
     const doughFactor = (style, hydration) => 1 + hydration + factors.hefe[style] + factors.salz;
     const ballWeight = style => mehlPerPizza[style] * doughFactor(style, referenceHydration);
