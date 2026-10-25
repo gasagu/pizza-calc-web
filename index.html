@@ -174,6 +174,10 @@
       <label for="hydrationInput">Hydratation <span class="range-value" id="hydrationValue"></span></label>
       <input type="range" id="hydrationInput" min="60" max="75" step="0.5" value="70">
     </div>
+    <div class="field">
+      <label for="sauerteigInput">Sauerteig in g (optional, 100 % Hydratation)</label>
+      <input type="number" id="sauerteigInput" min="0" step="5" placeholder="0">
+    </div>
     <table class="table" id="resultTable">
       <thead>
         <tr><th>Zutat</th><th>Menge</th></tr>
@@ -185,6 +189,7 @@
         <tr><td>Wasser</td><td class="value" id="wasser"></td></tr>
         <tr><td>Frische Hefe</td><td class="value" id="hefe"></td></tr>
         <tr><td>Salz</td><td class="value" id="salz"></td></tr>
+        <tr id="sauerteigRow" hidden><td>Sauerteig</td><td class="value" id="sauerteig"></td></tr>
         <tr class="total total-first"><td>Teigballen</td><td class="value" id="teigballen"></td></tr>
         <tr class="total"><td>Teig gesamt</td><td class="value" id="teigGesamt"></td></tr>
       </tbody>
@@ -194,7 +199,7 @@
 	  <li>Wasser in eine Schüssel geben.</li>
 	  <li>Mehlsorten hinzugeben.</li>
 	  <li>Grobes vermengen mit einem Löffel.</li>
-	  <li>Die Hefe hinzugeben. Wenn es trockenhefe sein sollte nur 1/3 der Menge benutzen.</li>
+	  <li>Die Hefe (und ggf. den Sauerteig) hinzugeben. Wenn es trockenhefe sein sollte nur 1/3 der Menge benutzen.</li>
 	  <li>2 Minuten auf Stufe 1 in die Kitchenaid.</li>
 	  <li>Salz hinzugeben.</li>
 	  <li>Weitere 8 Minuten auf Stufe 2 kneten.</li>
@@ -218,6 +223,8 @@
     };
     const doughFactor = (style, hydration) => 1 + hydration + factors.hefe[style] + factors.salz;
     const ballWeight = style => mehlPerPizza[style] * doughFactor(style, referenceHydration);
+    // Hefe sinkt um das 5-Fache des Mehlanteils aus dem Sauerteig (10 % Sauerteigmehl → halbe Hefe)
+    const sauerteigHefeReduktion = 5;
 
     let selectedStyle = 'Flach';
     const styleButtons = document.querySelectorAll('#styleSegment button');
@@ -237,13 +244,20 @@
       const hydration = Number(document.getElementById('hydrationInput').value) / 100;
       const flourPerBall = ballWeight(style) / doughFactor(style, hydration);
       const totalFlour = flourPerBall * persons;
-      const mehl00 = totalFlour * factors.mehl00;
-      const mehl1 = totalFlour * factors.mehl1;
-      const wasser = totalFlour * hydration;
-      const hefe = totalFlour * factors.hefe[style];
+      // Sauerteig bringt je zur Hälfte Mehl und Wasser mit, die vom Rezept abgezogen werden
+      const sauerteig = Math.min(Math.max(Number(document.getElementById('sauerteigInput').value) || 0, 0), totalFlour);
+      const sauerteigMehl = sauerteig / 2;
+      const addedFlour = totalFlour - sauerteigMehl;
+      const mehl00 = addedFlour * factors.mehl00;
+      const mehl1 = addedFlour * factors.mehl1;
+      const wasser = Math.max(totalFlour * hydration - sauerteig / 2, 0);
+      const hefeReduktion = Math.max(1 - sauerteigHefeReduktion * sauerteigMehl / totalFlour, 0);
+      const hefe = totalFlour * factors.hefe[style] * hefeReduktion;
       const salz = totalFlour * factors.salz;
 
-      document.getElementById('mehlGesamt').textContent = totalFlour.toFixed(1) + ' g';
+      document.getElementById('sauerteigRow').hidden = sauerteig === 0;
+      document.getElementById('sauerteig').textContent = sauerteig.toFixed(0) + ' g';
+      document.getElementById('mehlGesamt').textContent = addedFlour.toFixed(1) + ' g';
       document.getElementById('mehl00').textContent = mehl00.toFixed(1) + ' g';
       document.getElementById('mehl1').textContent = mehl1.toFixed(1) + ' g';
       document.getElementById('wasser').textContent = wasser.toFixed(0) + ' ml';
@@ -256,6 +270,7 @@
 
     document.getElementById('personsInput').addEventListener('input', calculate);
     document.getElementById('hydrationInput').addEventListener('input', calculate);
+    document.getElementById('sauerteigInput').addEventListener('input', calculate);
     window.addEventListener('DOMContentLoaded', calculate);
   </script>
 </body>
