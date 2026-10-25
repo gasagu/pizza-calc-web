@@ -168,6 +168,7 @@
       <div class="segment-control" id="styleSegment">
         <button data-style="Fluffig">Fluffig</button>
         <button data-style="Flach" class="active">Flach</button>
+        <button data-style="Roma">Roma</button>
       </div>
     </div>
     <div class="field">
@@ -181,10 +182,11 @@
       <tbody>
         <tr><td>Mehl Gesamt</td><td class="value" id="mehlGesamt"></td></tr>
         <tr><td>Mehl 00</td><td class="value" id="mehl00"></td></tr>
-        <tr><td>Mehl 1</td><td class="value" id="mehl1"></td></tr>
+        <tr id="mehl1Row"><td>Mehl 1</td><td class="value" id="mehl1"></td></tr>
         <tr><td>Wasser</td><td class="value" id="wasser"></td></tr>
         <tr><td>Frische Hefe</td><td class="value" id="hefe"></td></tr>
         <tr><td>Salz</td><td class="value" id="salz"></td></tr>
+        <tr id="oelRow" hidden><td>Olivenöl</td><td class="value" id="oel"></td></tr>
         <tr class="total total-first"><td>Teigballen</td><td class="value" id="teigballen"></td></tr>
         <tr class="total"><td>Teig gesamt</td><td class="value" id="teigGesamt"></td></tr>
       </tbody>
@@ -197,6 +199,7 @@
 	  <li>Die Hefe hinzugeben. Wenn es trockenhefe sein sollte nur 1/3 der Menge benutzen.</li>
 	  <li>2 Minuten auf Stufe 1 in die Kitchenaid.</li>
 	  <li>Salz hinzugeben.</li>
+	  <li id="oelStep" hidden>Olivenöl hinzugeben.</li>
 	  <li>Weitere 8 Minuten auf Stufe 2 kneten.</li>
 	  <li>(Optional) Teig 5 Minuten von Hand kneten.</li>
 	  <li>(Optional) Teig auf Spannung schleifen.</li>
@@ -209,15 +212,18 @@
   </div>
 
   <script>
-    // Mehl pro Pizza bei 70 % Hydratation; daraus ergibt sich das feste Ballengewicht je Stil
-    const mehlPerPizza = { "Fluffig": 173.5956402033615, "Flach": 146.01244587989498 };
-    const referenceHydration = 0.70;
+    // Mehl pro Pizza bei der Referenz-Hydratation; daraus ergibt sich das feste Ballengewicht je Stil
+    const mehlPerPizza = { "Fluffig": 173.5956402033615, "Flach": 146.01244587989498, "Roma": 500 / 3 };
+    const referenceHydration = { "Fluffig": 0.70, "Flach": 0.70, "Roma": 0.60 };
+    // Roma: 500 g Mehl 00, 300 g Wasser, 15 g Salz, 15 g Olivenöl, 3 g Hefe für 3 Pizzen
     const factors = {
-      mehl00: 0.7, mehl1: 0.3,
-      hefe: { "Fluffig": 0.0015, "Flach": 0.0008108108108108108 }, salz: 0.026315
+      "Fluffig": { mehl00: 0.7, mehl1: 0.3, hefe: 0.0015, salz: 0.026315, oel: 0 },
+      "Flach": { mehl00: 0.7, mehl1: 0.3, hefe: 0.0008108108108108108, salz: 0.026315, oel: 0 },
+      "Roma": { mehl00: 1, mehl1: 0, hefe: 0.006, salz: 0.03, oel: 0.03 }
     };
-    const doughFactor = (style, hydration) => 1 + hydration + factors.hefe[style] + factors.salz;
-    const ballWeight = style => mehlPerPizza[style] * doughFactor(style, referenceHydration);
+    const doughFactor = (style, hydration) =>
+      1 + hydration + factors[style].hefe + factors[style].salz + factors[style].oel;
+    const ballWeight = style => mehlPerPizza[style] * doughFactor(style, referenceHydration[style]);
 
     let selectedStyle = 'Flach';
     const styleButtons = document.querySelectorAll('#styleSegment button');
@@ -226,6 +232,7 @@
         styleButtons.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         selectedStyle = btn.dataset.style;
+        document.getElementById('hydrationInput').value = referenceHydration[selectedStyle] * 100;
         calculate();
       });
     });
@@ -237,11 +244,18 @@
       const hydration = Number(document.getElementById('hydrationInput').value) / 100;
       const flourPerBall = ballWeight(style) / doughFactor(style, hydration);
       const totalFlour = flourPerBall * persons;
-      const mehl00 = totalFlour * factors.mehl00;
-      const mehl1 = totalFlour * factors.mehl1;
+      const f = factors[style];
+      const mehl00 = totalFlour * f.mehl00;
+      const mehl1 = totalFlour * f.mehl1;
       const wasser = totalFlour * hydration;
-      const hefe = totalFlour * factors.hefe[style];
-      const salz = totalFlour * factors.salz;
+      const hefe = totalFlour * f.hefe;
+      const salz = totalFlour * f.salz;
+      const oel = totalFlour * f.oel;
+
+      document.getElementById('mehl1Row').hidden = mehl1 === 0;
+      document.getElementById('oelRow').hidden = oel === 0;
+      document.getElementById('oelStep').hidden = oel === 0;
+      document.getElementById('oel').textContent = oel.toFixed(0) + ' g';
 
       document.getElementById('mehlGesamt').textContent = totalFlour.toFixed(1) + ' g';
       document.getElementById('mehl00').textContent = mehl00.toFixed(1) + ' g';
