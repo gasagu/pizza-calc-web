@@ -361,7 +361,7 @@
     // Römisch hat dasselbe Ballengewicht wie Fluffig
     mehlPerPizza["Römisch"] = mehlPerPizza["Fluffig"] * doughFactor("Fluffig", referenceHydration["Fluffig"])
       / doughFactor("Römisch", referenceHydration["Römisch"]);
-    const defaultBallWeight = style => Math.round(mehlPerPizza[style] * doughFactor(style, referenceHydration[style]));
+    const defaultBallWeight = style => mehlPerPizza[style] * doughFactor(style, referenceHydration[style]);
 
     const PERSONS_MIN = 1, PERSONS_MAX = 50;
     const BALL_MIN = 150, BALL_MAX = 500, BALL_STEP = 10;
@@ -403,8 +403,8 @@
 
     $('personsMinus').addEventListener('click', () => { persons = Math.max(PERSONS_MIN, persons - 1); calculate(); });
     $('personsPlus').addEventListener('click', () => { persons = Math.min(PERSONS_MAX, persons + 1); calculate(); });
-    $('ballMinus').addEventListener('click', () => { ballWeight = Math.max(BALL_MIN, ballWeight - BALL_STEP); calculate(); });
-    $('ballPlus').addEventListener('click', () => { ballWeight = Math.min(BALL_MAX, ballWeight + BALL_STEP); calculate(); });
+    $('ballMinus').addEventListener('click', () => { if (ballWeight - BALL_STEP >= BALL_MIN) ballWeight -= BALL_STEP; calculate(); });
+    $('ballPlus').addEventListener('click', () => { if (ballWeight + BALL_STEP <= BALL_MAX) ballWeight += BALL_STEP; calculate(); });
 
     function calculate() {
       const style = selectedStyle;
@@ -415,11 +415,11 @@
       const oel = totalFlour * f.oel;
 
       $('personsValue').textContent = persons;
-      $('ballValue').textContent = ballWeight + ' g';
+      $('ballValue').textContent = fmt(ballWeight, 1) + ' g';
       $('personsMinus').disabled = persons <= PERSONS_MIN;
       $('personsPlus').disabled = persons >= PERSONS_MAX;
-      $('ballMinus').disabled = ballWeight <= BALL_MIN;
-      $('ballPlus').disabled = ballWeight >= BALL_MAX;
+      $('ballMinus').disabled = ballWeight - BALL_STEP < BALL_MIN;
+      $('ballPlus').disabled = ballWeight + BALL_STEP > BALL_MAX;
 
       $('oelRow').hidden = oel === 0;
       $('oelStep').hidden = oel === 0;
@@ -432,8 +432,8 @@
       setAmount('hefe', hefe, 2, 'g');
       setAmount('salz', totalFlour * f.salz, 0, 'g');
       setAmount('oel', oel, 0, 'g');
-      setAmount('teigballen', ballWeight, 0, 'g');
-      setAmount('teigGesamt', ballWeight * persons, 0, 'g');
+      setAmount('teigballen', ballWeight, 1, 'g');
+      setAmount('teigGesamt', ballWeight * persons, 1, 'g');
       $('hydrationValue').textContent = (hydration * 100).toLocaleString('de-DE') + ' %';
     }
 
