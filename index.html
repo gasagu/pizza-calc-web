@@ -101,6 +101,9 @@
       color: var(--text);
       box-sizing: border-box;
     }
+    .field input[type="range"]:disabled {
+      opacity: 0.5;
+    }
     .field input[type="range"] {
       padding: 0;
       border: none;
@@ -169,6 +172,7 @@
         <button data-style="Fluffig">Fluffig</button>
         <button data-style="Flach" class="active">Flach</button>
         <button data-style="Roma">Roma</button>
+        <button data-style="Römisch">Römisch</button>
       </div>
     </div>
     <div class="field">
@@ -214,15 +218,22 @@
   <script>
     // Mehl pro Pizza bei der Referenz-Hydratation; daraus ergibt sich das feste Ballengewicht je Stil
     const mehlPerPizza = { "Fluffig": 173.5956402033615, "Flach": 146.01244587989498, "Roma": 500 / 3 };
-    const referenceHydration = { "Fluffig": 0.70, "Flach": 0.70, "Roma": 0.60 };
+    const referenceHydration = { "Fluffig": 0.70, "Flach": 0.70, "Roma": 0.60, "Römisch": 0.60 };
+    // Stile mit fester Hydratation (Regler gesperrt)
+    const fixedHydration = { "Römisch": true };
     // Roma: 500 g Mehl 00, 300 g Wasser, 15 g Salz, 15 g Olivenöl, 3 g Hefe für 3 Pizzen
     const factors = {
       "Fluffig": { mehl00: 0.7, mehl1: 0.3, hefe: 0.001, salz: 0.026315, oel: 0 },
       "Flach": { mehl00: 0.7, mehl1: 0.3, hefe: 0.0008108108108108108, salz: 0.026315, oel: 0 },
-      "Roma": { mehl00: 1, mehl1: 0, hefe: 0.006, salz: 0.03, oel: 0.03 }
+      "Roma": { mehl00: 1, mehl1: 0, hefe: 0.006, salz: 0.03, oel: 0.03 },
+      // Römisch: wie Fluffig, aber fix 60 % Hydratation und 2 % Olivenöl
+      "Römisch": { mehl00: 0.7, mehl1: 0.3, hefe: 0.001, salz: 0.026315, oel: 0.02 }
     };
     const doughFactor = (style, hydration) =>
       1 + hydration + factors[style].hefe + factors[style].salz + factors[style].oel;
+    // Römisch hat dasselbe Ballengewicht wie Fluffig
+    mehlPerPizza["Römisch"] = mehlPerPizza["Fluffig"] * doughFactor("Fluffig", referenceHydration["Fluffig"])
+      / doughFactor("Römisch", referenceHydration["Römisch"]);
     const ballWeight = style => mehlPerPizza[style] * doughFactor(style, referenceHydration[style]);
 
     let selectedStyle = 'Flach';
@@ -232,7 +243,9 @@
         styleButtons.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         selectedStyle = btn.dataset.style;
-        document.getElementById('hydrationInput').value = referenceHydration[selectedStyle] * 100;
+        const hydrationInput = document.getElementById('hydrationInput');
+        hydrationInput.value = referenceHydration[selectedStyle] * 100;
+        hydrationInput.disabled = !!fixedHydration[selectedStyle];
         calculate();
       });
     });
