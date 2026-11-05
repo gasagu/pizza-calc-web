@@ -343,8 +343,8 @@
   </div>
 
   <script>
-    // Mehl pro Pizza bei der Referenz-Hydratation; daraus ergibt sich das Standard-Ballengewicht je Stil
-    const mehlPerPizza = { "Fluffig": 173.5956402033615, "Flach": 146.01244587989498 };
+    // Standard-Ballengewicht je Stil in Gramm; die Mehlmenge wird daraus berechnet
+    const defaultBallWeights = { "Fluffig": 300, "Flach": 252, "Römisch": 300 };
     const referenceHydration = { "Fluffig": 0.70, "Flach": 0.70, "Römisch": 0.60 };
     // Stile mit fester Hydratation (Regler gesperrt)
     const fixedHydration = { "Römisch": true };
@@ -358,10 +358,7 @@
     const dryYeastFactor = 1 / 3;
     const doughFactor = (style, hydration) =>
       1 + hydration + factors[style].hefe + factors[style].salz + factors[style].oel;
-    // Römisch hat dasselbe Ballengewicht wie Fluffig
-    mehlPerPizza["Römisch"] = mehlPerPizza["Fluffig"] * doughFactor("Fluffig", referenceHydration["Fluffig"])
-      / doughFactor("Römisch", referenceHydration["Römisch"]);
-    const defaultBallWeight = style => mehlPerPizza[style] * doughFactor(style, referenceHydration[style]);
+    const defaultBallWeight = style => defaultBallWeights[style];
 
     const PERSONS_MIN = 1, PERSONS_MAX = 50;
     const BALL_MIN = 150, BALL_MAX = 500, BALL_STEP = 10;
