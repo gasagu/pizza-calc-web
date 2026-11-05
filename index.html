@@ -15,7 +15,8 @@
   <style>
     :root {
       color-scheme: light dark;
-      --bg: #FFFFFF;
+      --bg: #F2F2F7;
+      --card-bg: #FFFFFF;
       --header-bg: #F8F8F8;
       --border: #C7C7CC;
       --text: #000000;
@@ -28,12 +29,13 @@
     @media (prefers-color-scheme: dark) {
       :root {
         --bg: #000000;
+        --card-bg: #1C1C1E;
         --header-bg: #1C1C1E;
         --border: #38383A;
         --text: #FFFFFF;
         --text-secondary: #8E8E93;
         --text-steps: #E5E5EA;
-        --input-bg: #1C1C1E;
+        --input-bg: #2C2C2E;
         --accent: #0A84FF;
       }
     }
@@ -63,12 +65,26 @@
     .container {
       padding: 16px;
     }
+    /* Gruppierte Karten */
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+    .card.table-card {
+      padding: 4px 14px;
+    }
     .segment-control {
       display: inline-flex;
       border: 1px solid var(--accent);
       border-radius: 8px;
       overflow: hidden;
       background: var(--header-bg);
+    }
+    .segment-control.full {
+      display: flex;
+      width: 100%;
     }
     .segment-control button {
       padding: 8px 16px;
@@ -85,30 +101,52 @@
     .field {
       margin-bottom: 16px;
     }
-    .field label {
+    .field:last-child {
+      margin-bottom: 0;
+    }
+    .field label, .field .label {
       display: block;
       margin-bottom: 4px;
       font-size: 13px;
       color: var(--text-secondary);
     }
-    .field input {
-      width: 100%;
-      padding: 10px;
-      font-size: 17px;
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .stepper {
+      display: flex;
+      align-items: center;
       border: 1px solid var(--border);
       border-radius: 8px;
       background: var(--input-bg);
-      color: var(--text);
-      box-sizing: border-box;
+    }
+    .stepper button {
+      width: 44px;
+      height: 40px;
+      border: none;
+      background: none;
+      font-size: 22px;
+      color: var(--accent);
+    }
+    .stepper button:disabled {
+      opacity: 0.35;
+    }
+    .stepper output {
+      flex: 1;
+      text-align: center;
+      font-size: 17px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+    .field input[type="range"] {
+      width: 100%;
+      margin: 0;
+      accent-color: var(--accent);
     }
     .field input[type="range"]:disabled {
       opacity: 0.5;
-    }
-    .field input[type="range"] {
-      padding: 0;
-      border: none;
-      background: none;
-      accent-color: var(--accent);
     }
     .field label .range-value {
       float: right;
@@ -118,21 +156,40 @@
     .table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 24px;
     }
     .table th, .table td {
       text-align: left;
-      padding: 12px;
+      padding: 12px 0;
       font-size: 17px;
       border-bottom: 1px solid var(--border);
     }
     .table th {
+      font-size: 13px;
       color: var(--text-secondary);
       font-weight: 600;
     }
+    .table th:last-child {
+      text-align: right;
+    }
+    .table tr:last-child td {
+      border-bottom: none;
+    }
+    /* Mengen ausgerichtet, Einheit dezent */
     .table td.value {
       text-align: right;
       color: var(--text);
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .table td.value .unit {
+      display: inline-block;
+      width: 26px;
+      padding-left: 4px;
+      text-align: left;
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--text-secondary);
     }
     .table tr.total td {
       font-weight: 600;
@@ -140,21 +197,57 @@
     .table tr.total-first td {
       border-top: 2px solid var(--border);
     }
-	.section-title {
-	  margin-top: 32px;
-	  font-size: 20px;
-	  font-weight: 600;
-	}
-	.steps {
-	  padding-left: 20px;
-	  margin-top: 12px;
-	}
-	.steps li {
-	  margin-bottom: 10px;
-	  font-size: 16px;
-	  line-height: 1.4;
-	  color: var(--text-steps);
-	}
+    .section-title {
+      margin: 24px 4px 8px;
+      font-size: 20px;
+      font-weight: 600;
+    }
+    /* Zubereitung in Phasen, durchgehend nummeriert */
+    .steps-card {
+      counter-reset: step;
+    }
+    .phase {
+      display: flex;
+      justify-content: space-between;
+      margin: 18px 0 8px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-secondary);
+    }
+    .phase:first-child {
+      margin-top: 0;
+    }
+    .phase span {
+      text-transform: none;
+      letter-spacing: 0;
+      font-weight: 400;
+    }
+    .steps {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .steps li {
+      counter-increment: step;
+      position: relative;
+      padding-left: 28px;
+      margin-bottom: 10px;
+      font-size: 16px;
+      line-height: 1.4;
+      color: var(--text-steps);
+    }
+    .steps li::before {
+      content: counter(step) ".";
+      position: absolute;
+      left: 0;
+      color: var(--text-secondary);
+      font-variant-numeric: tabular-nums;
+    }
+    .steps li:last-child {
+      margin-bottom: 0;
+    }
   </style>
 </head>
 <body>
@@ -162,127 +255,189 @@
     <h1>Pizza Rechner</h1>
   </div>
   <div class="container">
-    <div class="field">
-      <label for="personsInput">Anzahl Pizzen</label>
-      <input type="number" id="personsInput" min="1" value="2">
-    </div>
-    <div class="field">
-      <label>Pizzastil</label>
-      <div class="segment-control" id="styleSegment">
-        <button data-style="Fluffig">Fluffig</button>
-        <button data-style="Flach" class="active">Flach</button>
-        <button data-style="Roma">Roma</button>
-        <button data-style="Römisch">Römisch</button>
+    <div class="card">
+      <div class="field field-row">
+        <div>
+          <span class="label">Anzahl Pizzen</span>
+          <div class="stepper">
+            <button id="personsMinus" aria-label="Eine Pizza weniger">−</button>
+            <output id="personsValue"></output>
+            <button id="personsPlus" aria-label="Eine Pizza mehr">+</button>
+          </div>
+        </div>
+        <div>
+          <span class="label">Teigballen</span>
+          <div class="stepper">
+            <button id="ballMinus" aria-label="Teigballen 10 g leichter">−</button>
+            <output id="ballValue"></output>
+            <button id="ballPlus" aria-label="Teigballen 10 g schwerer">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <span class="label">Pizzastil</span>
+        <div class="segment-control full" id="styleSegment">
+          <button data-style="Fluffig">Fluffig</button>
+          <button data-style="Flach" class="active">Flach</button>
+          <button data-style="Römisch">Römisch</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="hydrationInput">Hydratation <span class="range-value" id="hydrationValue"></span></label>
+        <input type="range" id="hydrationInput" min="60" max="75" step="0.5" value="70">
+      </div>
+      <div class="field">
+        <span class="label">Hefe</span>
+        <div class="segment-control" id="yeastSegment">
+          <button data-yeast="frisch" class="active">Frisch</button>
+          <button data-yeast="trocken">Trocken</button>
+        </div>
       </div>
     </div>
-    <div class="field">
-      <label for="hydrationInput">Hydratation <span class="range-value" id="hydrationValue"></span></label>
-      <input type="range" id="hydrationInput" min="60" max="75" step="0.5" value="70">
-    </div>
-    <table class="table" id="resultTable">
-      <thead>
-        <tr><th>Zutat</th><th>Menge</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>Mehl Gesamt</td><td class="value" id="mehlGesamt"></td></tr>
-        <tr><td>Mehl 00</td><td class="value" id="mehl00"></td></tr>
-        <tr id="mehl1Row"><td>Mehl 1</td><td class="value" id="mehl1"></td></tr>
-        <tr><td>Wasser</td><td class="value" id="wasser"></td></tr>
-        <tr><td>Frische Hefe</td><td class="value" id="hefe"></td></tr>
-        <tr><td>Salz</td><td class="value" id="salz"></td></tr>
-        <tr id="oelRow" hidden><td>Olivenöl</td><td class="value" id="oel"></td></tr>
-        <tr class="total total-first"><td>Teigballen</td><td class="value" id="teigballen"></td></tr>
-        <tr class="total"><td>Teig gesamt</td><td class="value" id="teigGesamt"></td></tr>
-      </tbody>
-    </table>
-    <h2 class="section-title">Zubereitung</h2>
-	<ol class="steps" id="recipeSteps">
-	  <li>Wasser in eine Schüssel geben.</li>
-	  <li>Mehlsorten hinzugeben.</li>
-	  <li>Grobes vermengen mit einem Löffel.</li>
-	  <li>Die Hefe hinzugeben. Wenn es trockenhefe sein sollte nur 1/3 der Menge benutzen.</li>
-	  <li>2 Minuten auf Stufe 1 in die Kitchenaid.</li>
-	  <li>Salz hinzugeben.</li>
-	  <li id="oelStep" hidden>Olivenöl hinzugeben.</li>
-	  <li>Weitere 8 Minuten auf Stufe 2 kneten.</li>
-	  <li>(Optional) Teig 5 Minuten von Hand kneten.</li>
-	  <li>(Optional) Teig auf Spannung schleifen.</li>
-	  <li>Teig in die Teigschüssel geben und mit Deckel in den Kühlschrank.</li>
-	  <li>Ungefähr 67 Stunden im Kühlschrank belassen.</li>
-	  <li>Teigliche formen und auf Spannung schleifen.</li>
-	  <li>5 Stunden bei Raumtemperatur ziehen lassen.</li>
-	</ol>
 
+    <div class="card table-card">
+      <table class="table" id="resultTable">
+        <thead>
+          <tr><th>Zutat</th><th>Menge</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Mehl Gesamt</td><td class="value" id="mehlGesamt"></td></tr>
+          <tr><td>Mehl 00</td><td class="value" id="mehl00"></td></tr>
+          <tr><td>Mehl 1</td><td class="value" id="mehl1"></td></tr>
+          <tr><td>Wasser</td><td class="value" id="wasser"></td></tr>
+          <tr><td id="hefeLabel">Frische Hefe</td><td class="value" id="hefe"></td></tr>
+          <tr><td>Salz</td><td class="value" id="salz"></td></tr>
+          <tr id="oelRow" hidden><td>Olivenöl</td><td class="value" id="oel"></td></tr>
+          <tr class="total total-first"><td>Teigballen</td><td class="value" id="teigballen"></td></tr>
+          <tr class="total"><td>Teig gesamt</td><td class="value" id="teigGesamt"></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="section-title">Zubereitung</h2>
+    <div class="card steps-card">
+      <div class="phase">Kneten <span>ca. 15 Min.</span></div>
+      <ol class="steps">
+        <li>Wasser in eine Schüssel geben.</li>
+        <li>Mehlsorten hinzugeben.</li>
+        <li>Grobes vermengen mit einem Löffel.</li>
+        <li>Die Hefe hinzugeben.</li>
+        <li>2 Minuten auf Stufe 1 in die Kitchenaid.</li>
+        <li>Salz hinzugeben.</li>
+        <li id="oelStep" hidden>Olivenöl hinzugeben.</li>
+        <li>Weitere 8 Minuten auf Stufe 2 kneten.</li>
+        <li>(Optional) Teig 5 Minuten von Hand kneten.</li>
+        <li>(Optional) Teig auf Spannung schleifen.</li>
+      </ol>
+      <div class="phase">Kalte Gare <span>ca. 67 Std.</span></div>
+      <ol class="steps">
+        <li>Teig in die Teigschüssel geben und mit Deckel in den Kühlschrank.</li>
+        <li>Ungefähr 67 Stunden im Kühlschrank belassen.</li>
+      </ol>
+      <div class="phase">Formen &amp; Gehen <span>5 Std.</span></div>
+      <ol class="steps">
+        <li>Teigliche formen und auf Spannung schleifen.</li>
+        <li>5 Stunden bei Raumtemperatur ziehen lassen.</li>
+      </ol>
+    </div>
   </div>
 
   <script>
-    // Mehl pro Pizza bei der Referenz-Hydratation; daraus ergibt sich das feste Ballengewicht je Stil
-    const mehlPerPizza = { "Fluffig": 173.5956402033615, "Flach": 146.01244587989498, "Roma": 500 / 3 };
-    const referenceHydration = { "Fluffig": 0.70, "Flach": 0.70, "Roma": 0.60, "Römisch": 0.60 };
+    // Mehl pro Pizza bei der Referenz-Hydratation; daraus ergibt sich das Standard-Ballengewicht je Stil
+    const mehlPerPizza = { "Fluffig": 173.5956402033615, "Flach": 146.01244587989498 };
+    const referenceHydration = { "Fluffig": 0.70, "Flach": 0.70, "Römisch": 0.60 };
     // Stile mit fester Hydratation (Regler gesperrt)
     const fixedHydration = { "Römisch": true };
-    // Roma: 500 g Mehl 00, 300 g Wasser, 15 g Salz, 15 g Olivenöl, 3 g Hefe für 3 Pizzen
     const factors = {
       "Fluffig": { mehl00: 0.7, mehl1: 0.3, hefe: 0.001, salz: 0.026315, oel: 0 },
       "Flach": { mehl00: 0.7, mehl1: 0.3, hefe: 0.0008108108108108108, salz: 0.026315, oel: 0 },
-      "Roma": { mehl00: 1, mehl1: 0, hefe: 0.006, salz: 0.03, oel: 0.03 },
       // Römisch: wie Fluffig, aber fix 60 % Hydratation und 2 % Olivenöl
       "Römisch": { mehl00: 0.7, mehl1: 0.3, hefe: 0.001, salz: 0.026315, oel: 0.02 }
     };
+    // Trockenhefe: ein Drittel der Frischhefe-Menge
+    const dryYeastFactor = 1 / 3;
     const doughFactor = (style, hydration) =>
       1 + hydration + factors[style].hefe + factors[style].salz + factors[style].oel;
     // Römisch hat dasselbe Ballengewicht wie Fluffig
     mehlPerPizza["Römisch"] = mehlPerPizza["Fluffig"] * doughFactor("Fluffig", referenceHydration["Fluffig"])
       / doughFactor("Römisch", referenceHydration["Römisch"]);
-    const ballWeight = style => mehlPerPizza[style] * doughFactor(style, referenceHydration[style]);
+    const defaultBallWeight = style => Math.round(mehlPerPizza[style] * doughFactor(style, referenceHydration[style]));
+
+    const PERSONS_MIN = 1, PERSONS_MAX = 50;
+    const BALL_MIN = 150, BALL_MAX = 500, BALL_STEP = 10;
 
     let selectedStyle = 'Flach';
-    const styleButtons = document.querySelectorAll('#styleSegment button');
-    styleButtons.forEach(btn => {
+    let persons = 2;
+    let ballWeight = defaultBallWeight(selectedStyle);
+    let yeast = 'frisch';
+
+    const $ = id => document.getElementById(id);
+    const fmt = (value, digits) => value.toLocaleString('de-DE', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    const setAmount = (id, value, digits, unit) => {
+      $(id).innerHTML = fmt(value, digits) + '<span class="unit">' + unit + '</span>';
+    };
+
+    function selectInSegment(segmentId, button) {
+      document.querySelectorAll('#' + segmentId + ' button').forEach(b => b.classList.toggle('active', b === button));
+    }
+
+    document.querySelectorAll('#styleSegment button').forEach(btn => {
       btn.addEventListener('click', () => {
-        styleButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        selectInSegment('styleSegment', btn);
         selectedStyle = btn.dataset.style;
-        const hydrationInput = document.getElementById('hydrationInput');
+        ballWeight = defaultBallWeight(selectedStyle);
+        const hydrationInput = $('hydrationInput');
         hydrationInput.value = referenceHydration[selectedStyle] * 100;
         hydrationInput.disabled = !!fixedHydration[selectedStyle];
         calculate();
       });
     });
 
+    document.querySelectorAll('#yeastSegment button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectInSegment('yeastSegment', btn);
+        yeast = btn.dataset.yeast;
+        calculate();
+      });
+    });
+
+    $('personsMinus').addEventListener('click', () => { persons = Math.max(PERSONS_MIN, persons - 1); calculate(); });
+    $('personsPlus').addEventListener('click', () => { persons = Math.min(PERSONS_MAX, persons + 1); calculate(); });
+    $('ballMinus').addEventListener('click', () => { ballWeight = Math.max(BALL_MIN, ballWeight - BALL_STEP); calculate(); });
+    $('ballPlus').addEventListener('click', () => { ballWeight = Math.min(BALL_MAX, ballWeight + BALL_STEP); calculate(); });
+
     function calculate() {
-      const persons = Number(document.getElementById('personsInput').value);
-      if (!persons || persons < 1) return;
       const style = selectedStyle;
-      const hydration = Number(document.getElementById('hydrationInput').value) / 100;
-      const flourPerBall = ballWeight(style) / doughFactor(style, hydration);
-      const totalFlour = flourPerBall * persons;
+      const hydration = Number($('hydrationInput').value) / 100;
+      const totalFlour = ballWeight / doughFactor(style, hydration) * persons;
       const f = factors[style];
-      const mehl00 = totalFlour * f.mehl00;
-      const mehl1 = totalFlour * f.mehl1;
-      const wasser = totalFlour * hydration;
-      const hefe = totalFlour * f.hefe;
-      const salz = totalFlour * f.salz;
+      const hefe = totalFlour * f.hefe * (yeast === 'trocken' ? dryYeastFactor : 1);
       const oel = totalFlour * f.oel;
 
-      document.getElementById('mehl1Row').hidden = mehl1 === 0;
-      document.getElementById('oelRow').hidden = oel === 0;
-      document.getElementById('oelStep').hidden = oel === 0;
-      document.getElementById('oel').textContent = oel.toFixed(0) + ' g';
+      $('personsValue').textContent = persons;
+      $('ballValue').textContent = ballWeight + ' g';
+      $('personsMinus').disabled = persons <= PERSONS_MIN;
+      $('personsPlus').disabled = persons >= PERSONS_MAX;
+      $('ballMinus').disabled = ballWeight <= BALL_MIN;
+      $('ballPlus').disabled = ballWeight >= BALL_MAX;
 
-      document.getElementById('mehlGesamt').textContent = totalFlour.toFixed(1) + ' g';
-      document.getElementById('mehl00').textContent = mehl00.toFixed(1) + ' g';
-      document.getElementById('mehl1').textContent = mehl1.toFixed(1) + ' g';
-      document.getElementById('wasser').textContent = wasser.toFixed(0) + ' ml';
-      document.getElementById('hefe').textContent = hefe.toFixed(2) + ' g';
-      document.getElementById('salz').textContent = salz.toFixed(0) + ' g';
-      document.getElementById('hydrationValue').textContent = (hydration * 100).toLocaleString('de-DE') + ' %';
-      document.getElementById('teigballen').textContent = ballWeight(style).toFixed(0) + ' g';
-      document.getElementById('teigGesamt').textContent = (ballWeight(style) * persons).toFixed(0) + ' g';
+      $('oelRow').hidden = oel === 0;
+      $('oelStep').hidden = oel === 0;
+      $('hefeLabel').textContent = yeast === 'trocken' ? 'Trockenhefe' : 'Frische Hefe';
+
+      setAmount('mehlGesamt', totalFlour, 1, 'g');
+      setAmount('mehl00', totalFlour * f.mehl00, 1, 'g');
+      setAmount('mehl1', totalFlour * f.mehl1, 1, 'g');
+      setAmount('wasser', totalFlour * hydration, 0, 'ml');
+      setAmount('hefe', hefe, 2, 'g');
+      setAmount('salz', totalFlour * f.salz, 0, 'g');
+      setAmount('oel', oel, 0, 'g');
+      setAmount('teigballen', ballWeight, 0, 'g');
+      setAmount('teigGesamt', ballWeight * persons, 0, 'g');
+      $('hydrationValue').textContent = (hydration * 100).toLocaleString('de-DE') + ' %';
     }
 
-    document.getElementById('personsInput').addEventListener('input', calculate);
-    document.getElementById('hydrationInput').addEventListener('input', calculate);
+    $('hydrationInput').addEventListener('input', calculate);
     window.addEventListener('DOMContentLoaded', calculate);
   </script>
 </body>
